@@ -189,5 +189,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case 2:
                 Toast.makeText(this, "lose", Toast.LENGTH_SHORT).show();
         }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                initGame();
+            }
+        }).start();
     }
+
 }
