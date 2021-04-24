@@ -164,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
     public int getWinState(int playerMora,int computerMora){
+        Log.d(TAG, "getWinState: 456456");
         if(playerMora==computerMora){
             return EVEN;
         }
@@ -184,10 +185,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (state){
             case 0:
                 Toast.makeText(this, "even", Toast.LENGTH_SHORT).show();
+                break;
             case 1:
                 Toast.makeText(this, "win", Toast.LENGTH_SHORT).show();
+                break;
             case 2:
                 Toast.makeText(this, "lose", Toast.LENGTH_SHORT).show();
+                break;
         }
         new Thread(new Runnable() {
             @Override
