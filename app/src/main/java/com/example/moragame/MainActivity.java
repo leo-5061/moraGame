@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long gameRoundSeconds;
     private int gameRound;
     private boolean isWin;
-    private boolean gameOver=true;
+    private boolean gameOver = true;
     private int score;
     private static final String TAG = "MainActivity";
     public static final int EVEN = 0;
@@ -49,8 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int COMPUTER_WIN = 2;
     private SoundPool soundPool;
     private int[] soundResId;
-    private final int SOUND_CORRECT=0;
-    private final int SOUND_WRONG=1;
+    private final int SOUND_CORRECT = 0;
+    private final int SOUND_WRONG = 1;
 
     private Timer timer;
 
@@ -65,8 +65,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         computer.setOnComputerCompletedListener(this);
 
         computerImg.setImageResource(R.drawable.scissors);
+        soundPool = new SoundPool.Builder().setMaxStreams(10).build();
+        soundResId = new int[]{
+                soundPool.load(this, R.raw.correct, 1),
+                soundPool.load(this, R.raw.wrong, 1)
+        };
 
-
+    }
+    public void soundPlay(int index){
+        soundPool.play(soundResId[index],1,1,1,0,1);
     }
 
     public void findViews() {
@@ -78,10 +85,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         quitBtn = findViewById(R.id.quit_btn);
         computerImg = findViewById(R.id.computer_img);
         playerImg = findViewById(R.id.player_img);
-        roundTxt=findViewById(R.id.round_text);
-        winCountTxt=findViewById(R.id.win_count_text);
-        heartTxt=findViewById(R.id.heart_text);
-        bigCounterTxt=findViewById(R.id.big_counter_text);
+        roundTxt = findViewById(R.id.round_text);
+        winCountTxt = findViewById(R.id.win_count_text);
+        heartTxt = findViewById(R.id.heart_text);
+        bigCounterTxt = findViewById(R.id.big_counter_text);
         View[] views = {scissorsIbn, rockIbn, paperIbn, startBtn, quitBtn};
         for (View v : views) {
             v.setOnClickListener(this);
@@ -93,18 +100,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         counterTxt.setText("2:000");
         findViewById(R.id.grid_layout).setVisibility(View.INVISIBLE);
         bigCounterTxt.setVisibility(View.VISIBLE);
-        gameRoundSeconds=2000;
-        player=new Player();
-        String heart="";
-        for(int i=0;i<player.getLife();i++){
-            heart+="♥";
+        gameRoundSeconds = 2000;
+        player = new Player();
+        String heart = "";
+        for (int i = 0; i < player.getLife(); i++) {
+            heart += "♥";
         }
         heartTxt.setText(heart);
-        gameRound=0;
+        gameRound = 0;
 
-        score=0;
-        winCountTxt.setText(String.format("%03d",score));
-        isWin=false;
+        score = 0;
+        winCountTxt.setText(String.format("%03d", score));
+        isWin = false;
 
         if (timer != null) {
             timer.setAlive(false);
@@ -124,12 +131,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handler.sendEmptyMessage(5);
         timer.setStepMilliseconds(1000);
         timer.start();
-        gameOver=false;
+        gameOver = false;
         isPlayerRound = false;
     }
-    public void startGame(){
-        gameRoundSeconds=2000;
-        isWin=false;
+
+    public void startGame() {
+        gameRoundSeconds = 2000;
+        isWin = false;
         if (timer != null) {
             timer.setAlive(false);
         }
@@ -137,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         timer = new Timer(gameRoundSeconds, true, new Timer.OnTimerListener() {
             @Override
             public void OnTick(long milliseconds) {
-                sendTimerMessage(milliseconds,3);
+                sendTimerMessage(milliseconds, 3);
 
             }
 
@@ -196,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.start_btn:
-                if(gameOver) {
+                if (gameOver) {
                     initGame();
                 }
                 //Toast.makeText(this,getResources().getString(R.string.start),Toast.LENGTH_SHORT).show();
@@ -263,11 +271,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     checkGameState();
                     break;
                 case 5:
-                    roundTxt.setText(getResources().getString(R.string.round)+" "+(gameRound+1));
+                    roundTxt.setText(getResources().getString(R.string.round) + " " + (gameRound + 1));
                     playerImg.setVisibility(View.INVISIBLE);
                     break;
                 case 6:
-                    bigCounterTxt.setText((String)msg.obj);
+                    bigCounterTxt.setText((String) msg.obj);
                     break;
                 case 7:
                     bigCounterTxt.setVisibility(View.INVISIBLE);
@@ -302,23 +310,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void checkGameState() {
         int state = getWinState(player.getMora(), computer.getMora());
-        if(state==EVEN){
+        if (state == EVEN) {
 
-        }else if(state==PLAYER_WIN){
-            isWin=true;
-            score+=1;
-            winCountTxt.setText(String.format("%03d",score));
-        }else if(state==COMPUTER_WIN){
-            player.setLife(player.getLife()-1);
-            String heart="";
-            for(int i=0;i<player.getLife();i++){
-                heart+="♥";
+        } else if (state == PLAYER_WIN) {
+            isWin = true;
+            score += 1;
+            winCountTxt.setText(String.format("%03d", score));
+            soundPlay(SOUND_CORRECT);
+        } else if (state == COMPUTER_WIN) {
+            player.setLife(player.getLife() - 1);
+            String heart = "";
+            for (int i = 0; i < player.getLife(); i++) {
+                heart += "♥";
             }
             heartTxt.setText(heart);
+            soundPlay(SOUND_WRONG);
         }
-        isPlayerRound=false;
-        if(player.getLife()==0){
-            gameOver=true;
+        isPlayerRound = false;
+        if (player.getLife() == 0) {
+            gameOver = true;
             return;
         }
 
@@ -355,11 +365,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }).start();
     }
-    public void sendCounterMessage(long milliseconds,int what){
-        int seconds=(int)(milliseconds/1000);
-        Message message=new Message();
-        message.what=what;
-        message.obj=String.valueOf(seconds);
+
+    public void sendCounterMessage(long milliseconds, int what) {
+        int seconds = (int) (milliseconds / 1000);
+        Message message = new Message();
+        message.what = what;
+        message.obj = String.valueOf(seconds);
         handler.sendMessage(message);
     }
 
@@ -374,17 +385,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void NextRound() {
         if (isWin) {
-            gameRoundSeconds=gameRoundSeconds - ((gameRound / 10) * 10);
-            if(gameRoundSeconds<500){
-                gameRoundSeconds=500;
+            gameRoundSeconds = gameRoundSeconds - ((gameRound / 10) * 10);
+            if (gameRoundSeconds < 500) {
+                gameRoundSeconds = 500;
             }
             timer.setTargetMilliseconds(gameRoundSeconds);
         }
-        gameRound+=1;
+        gameRound += 1;
 
         handler.sendEmptyMessage(5);
-        isPlayerRound=false;
-        isWin=false;
+        isPlayerRound = false;
+        isWin = false;
         timer.reset();
         computer.AI();
     }
