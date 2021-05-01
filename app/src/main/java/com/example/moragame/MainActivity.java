@@ -3,6 +3,7 @@ package com.example.moragame;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,6 +11,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -27,6 +29,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button startBtn;
     private Button quitBtn;
     private TextView counterTxt;
+    private TextView roundTxt;
+    private TextView winCountTxt;
+    private TextView heartTxt;
+    private TextView bigCounterTxt;
     private ImageView computerImg;
     private ImageView playerImg;
     private Player player;
@@ -35,11 +41,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long gameRoundSeconds;
     private int gameRound;
     private boolean isWin;
+    private boolean gameOver=true;
     private int score;
     private static final String TAG = "MainActivity";
     public static final int EVEN = 0;
     public static final int PLAYER_WIN = 1;
     public static final int COMPUTER_WIN = 2;
+    private SoundPool soundPool;
+    private int[] soundResId;
+    private final int SOUND_CORRECT=0;
+    private final int SOUND_WRONG=1;
+
     private Timer timer;
 
     @Override
@@ -66,6 +78,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         quitBtn = findViewById(R.id.quit_btn);
         computerImg = findViewById(R.id.computer_img);
         playerImg = findViewById(R.id.player_img);
+        roundTxt=findViewById(R.id.round_text);
+        winCountTxt=findViewById(R.id.win_count_text);
+        heartTxt=findViewById(R.id.heart_text);
+        bigCounterTxt=findViewById(R.id.big_counter_text);
         View[] views = {scissorsIbn, rockIbn, paperIbn, startBtn, quitBtn};
         for (View v : views) {
             v.setOnClickListener(this);
@@ -73,14 +89,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void initGame() {
+        winCountTxt.setText("000");
+        counterTxt.setText("2:000");
+        findViewById(R.id.grid_layout).setVisibility(View.INVISIBLE);
+        bigCounterTxt.setVisibility(View.VISIBLE);
+        gameRoundSeconds=2000;
+        player=new Player();
+        String heart="";
+        for(int i=0;i<player.getLife();i++){
+            heart+="♥";
+        }
+        heartTxt.setText(heart);
+        gameRound=0;
+
+        score=0;
+        winCountTxt.setText(String.format("%03d",score));
+        isWin=false;
+
         if (timer != null) {
             timer.setAlive(false);
         }
-        timer = new Timer(1000, true, new Timer.OnTimerListener() {
+        timer = new Timer(3000, true, new Timer.OnTimerListener() {
             @Override
             public void OnTick(long milliseconds) {
 
-                sendTimerMessage(milliseconds, 3);
+                sendCounterMessage(milliseconds, 6);
+            }
+
+            @Override
+            public void OnTime(long milliseconds) {
+                sendCounterMessage(milliseconds, 7);
+            }
+        });
+        handler.sendEmptyMessage(5);
+        timer.setStepMilliseconds(1000);
+        timer.start();
+        gameOver=false;
+        isPlayerRound = false;
+    }
+    public void startGame(){
+        gameRoundSeconds=2000;
+        isWin=false;
+        if (timer != null) {
+            timer.setAlive(false);
+        }
+
+        timer = new Timer(gameRoundSeconds, true, new Timer.OnTimerListener() {
+            @Override
+            public void OnTick(long milliseconds) {
+                sendTimerMessage(milliseconds,3);
+
             }
 
             @Override
@@ -88,11 +146,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sendTimerMessage(milliseconds, 4);
             }
         });
+
+        handler.sendEmptyMessage(5);
         timer.setStepMilliseconds(50);
         timer.start();
-
         isPlayerRound = false;
         computer.AI();
+
+
     }
 
     @Override
@@ -135,7 +196,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.start_btn:
-                initGame();
+                if(gameOver) {
+                    initGame();
+                }
                 //Toast.makeText(this,getResources().getString(R.string.start),Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "onClick: " + getResources().getString(R.string.start));
                 break;
@@ -199,6 +262,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     counterTxt.setText((String) msg.obj);
                     checkGameState();
                     break;
+                case 5:
+                    roundTxt.setText(getResources().getString(R.string.round)+" "+(gameRound+1));
+                    playerImg.setVisibility(View.INVISIBLE);
+                    break;
+                case 6:
+                    bigCounterTxt.setText((String)msg.obj);
+                    break;
+                case 7:
+                    bigCounterTxt.setVisibility(View.INVISIBLE);
+                    findViewById(R.id.grid_layout).setVisibility(View.VISIBLE);
+                    startGame();
+                    break;
 
             }
         }
@@ -227,17 +302,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void checkGameState() {
         int state = getWinState(player.getMora(), computer.getMora());
-        switch (state) {
-            case 0:
-                Toast.makeText(this, "even", Toast.LENGTH_SHORT).show();
-                break;
-            case 1:
-                Toast.makeText(this, "win", Toast.LENGTH_SHORT).show();
-                break;
-            case 2:
-                Toast.makeText(this, "lose", Toast.LENGTH_SHORT).show();
-                break;
+        if(state==EVEN){
+
+        }else if(state==PLAYER_WIN){
+            isWin=true;
+            score+=1;
+            winCountTxt.setText(String.format("%03d",score));
+        }else if(state==COMPUTER_WIN){
+            player.setLife(player.getLife()-1);
+            String heart="";
+            for(int i=0;i<player.getLife();i++){
+                heart+="♥";
+            }
+            heartTxt.setText(heart);
         }
+        isPlayerRound=false;
+        if(player.getLife()==0){
+            gameOver=true;
+            return;
+        }
+
+//        switch (state) {
+//            case 0:
+//                //Toast.makeText(this, "even", Toast.LENGTH_SHORT).show();
+//                break;
+//            case 1:
+//                isWin=true;
+//                score+=1;
+//                winCountTxt.setText(String.format("%03d",score));
+//                //Toast.makeText(this, "win", Toast.LENGTH_SHORT).show();
+//                break;
+//            case 2:
+//                player.setLife(player.getLife()-1);
+//                String heart="";
+//                for(int i=0;i<player.getLife();i++){
+//                    heart+="♥";
+//                }
+//                heartTxt.setText(heart);
+//                //Toast.makeText(this, "lose", Toast.LENGTH_SHORT).show();
+//                break;
+//        }
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -251,6 +355,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }).start();
     }
+    public void sendCounterMessage(long milliseconds,int what){
+        int seconds=(int)(milliseconds/1000);
+        Message message=new Message();
+        message.what=what;
+        message.obj=String.valueOf(seconds);
+        handler.sendMessage(message);
+    }
 
     public void sendTimerMessage(long milliseconds, int what) {
         int seconds = (int) (milliseconds / 1000);
@@ -263,12 +374,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void NextRound() {
         if (isWin) {
-            gameRoundSeconds = gameRoundSeconds < 300 ? 300 : gameRoundSeconds - (gameRound / 10) * 10;
+            gameRoundSeconds=gameRoundSeconds - ((gameRound / 10) * 10);
+            if(gameRoundSeconds<500){
+                gameRoundSeconds=500;
+            }
             timer.setTargetMilliseconds(gameRoundSeconds);
         }
         gameRound+=1;
+
+        handler.sendEmptyMessage(5);
         isPlayerRound=false;
-        playerImg.setVisibility(View.INVISIBLE);
         isWin=false;
         timer.reset();
         computer.AI();

@@ -8,7 +8,7 @@ public class Player {
     private int mora;
     private int life;
 
-    public void Player() {
+    public Player() {
         mora = READY;
         life = 3;
     }
