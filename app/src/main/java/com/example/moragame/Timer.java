@@ -12,6 +12,7 @@ public class Timer implements Runnable {
     private long milliseconds;
     private long targetMilliseconds;
     private long stepMilliseconds;
+    private OnTimerListener onTimerListener;
 
     //是否到達時間
     private boolean onTime;
@@ -19,7 +20,8 @@ public class Timer implements Runnable {
     private boolean countDown;
 
 
-    public Timer(long targetMilliseconds, boolean countDown) {
+    public Timer(long targetMilliseconds, boolean countDown,OnTimerListener onTimerListener) {
+        this.onTimerListener=onTimerListener;
         this.targetMilliseconds = targetMilliseconds;
         this.countDown = countDown;
         stepMilliseconds = 100;
@@ -84,6 +86,10 @@ public class Timer implements Runnable {
         alive = true;
         onTime = false;
     }
+    public interface OnTimerListener{
+        void OnTick(long milliseconds);
+        void OnTime(long milliseconds);
+    }
 
     @Override
     public void run() {
@@ -94,7 +100,7 @@ public class Timer implements Runnable {
             if (stop) {
                 continue;
             }
-
+                onTimerListener.OnTick(milliseconds);
             Log.d(TAG, "run: " + milliseconds);
 
             try {
@@ -120,6 +126,7 @@ public class Timer implements Runnable {
 
             if (onTime) {
                 stop = true;
+                onTimerListener.OnTime(milliseconds);
                 Log.d(TAG, "time's up: " + milliseconds);
             }
         }
